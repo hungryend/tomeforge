@@ -1,0 +1,28 @@
+# Optional local OCR for scanned PDFs — an Ollama server with a vision model.
+#
+#   docker compose up -d            # pulls the model (~6.7 GB) into the `ollama` volume
+#   tomeforge book.pdf --ocr always --ollama-host http://localhost:11434
+#
+# CPU is slow (minutes per page). For real workloads run this on a machine with a
+# GPU (NVIDIA, or AMD via ROCm) — see the README — and point --ollama-host at it.
+# Override the model with `OCR_MODEL=qwen2.5vl:3b docker compose up -d`.
+services:
+  ollama:
+    image: ollama/ollama
+    container_name: tomeforge-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_KEEP_ALIVE=2h
+      - OCR_MODEL=${OCR_MODEL:-deepseek-ocr:3b}
+    # Pull the model on first start (cached in the volume), then serve.
+    # `$$OCR_MODEL` escapes Compose interpolation so the container shell expands it.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - ollama serve & until ollama list >/dev/null 2>&1; do sleep 1; done; ollama pull "$$OCR_MODEL"; wait
+    volumes:
+      - ollama:/root/.ollama
+
+volumes:
+  ollama:
