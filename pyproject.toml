@@ -15,7 +15,9 @@ dependencies = [
 tomeforge = "tomeforge.cli:main"
 
 [project.optional-dependencies]
-dev = ["pytest>=8.3", "ruff>=0.8", "Pillow>=11.0"]
+# HTTP sidecar mode (`tomeforge serve`). The CLI/library work without these.
+service = ["fastapi>=0.115", "uvicorn[standard]>=0.32", "python-multipart>=0.0.18"]
+dev = ["pytest>=8.3", "ruff>=0.8", "Pillow>=11.0", "httpx>=0.27"]
 
 [build-system]
 requires = ["hatchling"]
@@ -35,6 +37,8 @@ ignore = ["E501"]
 [tool.ruff.lint.per-file-ignores]
 # Bundled upstream converter — kept verbatim for easy re-sync; don't lint it.
 "src/tomeforge/pdf2md.py" = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+# File(...)/Form(...) in parameter defaults is THE FastAPI dependency pattern.
+"src/tomeforge/service.py" = ["B008"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

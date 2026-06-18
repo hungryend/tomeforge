@@ -1,15 +1,30 @@
-# Optional local OCR for scanned PDFs — an Ollama server with a vision model.
+# tomeforge as an HTTP conversion sidecar, plus an optional local OCR backend.
 #
-#   docker compose up -d            # pulls the model (~6.7 GB) into the `ollama` volume
-#   tomeforge book.pdf --ocr always --ollama-host http://localhost:11434
+#   docker compose up -d --build            # the tomeforge service on :8400
+#   docker compose --profile ocr up -d      # also start a local Ollama for scanned PDFs
 #
-# CPU is slow (minutes per page). For real workloads run this on a machine with a
-# GPU (NVIDIA, or AMD via ROCm) — see the README — and point --ollama-host at it.
-# Override the model with `OCR_MODEL=qwen2.5vl:3b docker compose up -d`.
+# Convert via the API:
+#   curl -F file=@book.pdf http://localhost:8400/convert
+#   # scanned PDF with the bundled OCR backend:
+#   curl -F file=@scan.pdf -F ocr=always -F ollama_host=http://ollama:11434 \
+#        http://localhost:8400/convert
+#
+# OCR on CPU is slow (minutes per page). For real workloads point ollama_host at a
+# GPU box (NVIDIA, or AMD via ROCm) instead of the `ocr` profile, and override the
+# model with `OCR_MODEL=qwen2.5vl:3b`.
 services:
+  tomeforge:
+    build: .
+    image: tomeforge:latest
+    container_name: tomeforge
+    restart: unless-stopped
+    ports:
+      - "8400:8400"
+
   ollama:
     image: ollama/ollama
     container_name: tomeforge-ollama
+    profiles: ["ocr"]
     restart: unless-stopped
     ports:
       - "11434:11434"
