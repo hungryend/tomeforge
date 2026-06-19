@@ -109,12 +109,18 @@ def convert(
     num_ctx: int = 8192,
     keep_markdown: bool = False,
     quiet: bool = False,
+    work_dir: str | Path | None = None,
 ) -> ConversionResult:
     """Convert `input_path` to an EPUB at `output_path` (default: alongside input).
 
     OCR (scanned PDFs) modes: ``auto`` OCRs only when the PDF looks scanned AND an
     Ollama host is set+reachable; ``always`` forces OCR (requires a reachable host);
     ``never`` uses the text layer only.
+
+    ``work_dir`` lets a caller supply the intermediate directory (where pdf2md
+    writes ``output.md`` + ``images/`` + the resumable OCR ``pages/`` cache) instead
+    of a throwaway temp dir. When given it is NOT deleted — the caller owns its
+    lifecycle, which also lets the caller poll ``work_dir/pages`` for OCR progress.
     """
     src = Path(input_path)
     if not src.is_file():
@@ -151,7 +157,9 @@ def convert(
             log("! this looks like a scanned/image PDF and no OCR server is configured — "
                 "text will be poor. Pass --ocr always --ollama-host <url> to OCR it.")
 
-    work = Path(mkdtemp(prefix="tomeforge-"))
+    caller_owns_work = work_dir is not None
+    work = Path(work_dir) if work_dir is not None else Path(mkdtemp(prefix="tomeforge-"))
+    work.mkdir(parents=True, exist_ok=True)
     try:
         opt = pdf2md.Options(
             out_dir=str(work),
@@ -180,6 +188,7 @@ def convert(
             shutil.copyfile(md, dest)
             log(f"kept Markdown → {dest}")
     finally:
-        shutil.rmtree(work, ignore_errors=True)
+        if not caller_owns_work:
+            shutil.rmtree(work, ignore_errors=True)
 
     return ConversionResult(out, engine="ocr" if engine == "ollama" else "heuristic", scanned=scanned)

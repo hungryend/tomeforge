@@ -10,6 +10,13 @@ from tomeforge.converter import ConversionError, calibre_available, convert
 
 
 def main(argv: list[str] | None = None) -> int:
+    args_in = sys.argv[1:] if argv is None else argv
+    # `tomeforge serve …` runs the optional HTTP sidecar (separate arg grammar).
+    if args_in and args_in[0] == "serve":
+        from tomeforge.service import main as serve_main
+
+        return serve_main(args_in[1:])
+
     p = argparse.ArgumentParser(
         prog="tomeforge",
         description="Convert PDFs (and MOBI/AZW/…) into clean, reflowable EPUBs with a "

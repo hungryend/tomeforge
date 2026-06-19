@@ -53,7 +53,7 @@ and, if you point it at an Ollama vision model, OCRs each page:
 
 ```bash
 # 1. Start a local Ollama with an OCR model (pulls ~6.7 GB once):
-docker compose up -d
+docker compose --profile ocr up -d
 # 2. Convert, forcing OCR:
 tomeforge scanned-book.pdf --ocr always --ollama-host http://localhost:11434
 ```
@@ -67,6 +67,37 @@ tomeforge scanned-book.pdf --ocr always --ollama-host http://localhost:11434
 run Ollama on a **GPU** box (NVIDIA, or AMD via [ROCm]) and point `--ollama-host` at it; there
 `deepseek-ocr` fits in VRAM and runs in seconds per page. Set `OLLAMA_KEEP_ALIVE` high on that host so
 the model stays resident across a long book.
+
+## Run as a service (sidecar)
+
+Beyond the CLI, tomeforge can run as a small HTTP service so another app can offload
+conversion (and its heavyweight PyMuPDF + Calibre deps) instead of bundling them:
+
+```bash
+pip install "tomeforge[service]"          # adds fastapi + uvicorn
+tomeforge serve --port 8400               # or: docker compose up -d --build
+```
+
+```bash
+# Submit a file, then poll the returned job_id until it's done.
+curl -F file=@book.pdf http://localhost:8400/convert
+#   → {"job_id": "…", "status": "queued", …}
+curl http://localhost:8400/jobs/<job_id>          # status + phase (e.g. "OCR page 3/40")
+curl -OJ http://localhost:8400/jobs/<job_id>/result   # the EPUB, once status == "done"
+```
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/convert` | multipart `file` + optional `ocr` / `ollama_host` / `model` / `dpi` / `ocr_timeout` form fields → `{job_id}` |
+| `GET` | `/jobs/{id}` | `{status, phase, engine, scanned, error}` (`phase` reports `OCR page N/M`) |
+| `GET` | `/jobs/{id}/result` | the converted EPUB (`409` until done) |
+| `DELETE` | `/jobs/{id}` | drop the job's temp files |
+| `GET` | `/healthz` | liveness + whether Calibre is on PATH |
+
+Scanned-PDF OCR works the same way — pass `ocr=always` (or `auto`) and an `ollama_host`
+the **service** can reach (e.g. `http://ollama:11434` on the compose network). The job
+registry is in-memory: the sidecar is a stateless worker, so a restart drops in-flight
+jobs and the caller re-submits.
 
 ## How it works
 
