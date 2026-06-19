@@ -28,6 +28,7 @@ def client(tmp_path, monkeypatch):
 
 def _stub_convert_ok(monkeypatch):
     """convert() that writes a fake EPUB to `out` and reports the heuristic engine."""
+
     def fake(src, out=None, *, work_dir=None, **kw):
         Path(out).write_bytes(b"PK\x03\x04 fake-epub")
         return ConversionResult(Path(out), engine="heuristic", scanned=False)
@@ -71,9 +72,9 @@ def test_convert_failure_is_recorded(client, monkeypatch):
 
     monkeypatch.setattr(service, "convert", boom)
 
-    job_id = client.post(
-        "/convert", files={"file": ("x.pdf", b"%PDF", "application/pdf")}
-    ).json()["job_id"]
+    job_id = client.post("/convert", files={"file": ("x.pdf", b"%PDF", "application/pdf")}).json()[
+        "job_id"
+    ]
     for _ in range(50):
         status = client.get(f"/jobs/{job_id}").json()
         if status["status"] in ("done", "failed"):
