@@ -31,30 +31,49 @@ def main(argv: list[str] | None = None) -> int:
         help="OCR scanned PDFs via Ollama: auto (only if scanned AND --ollama-host is "
         "set + reachable), always (force; needs a reachable host), never (default: auto)",
     )
-    p.add_argument("--ollama-host", metavar="URL",
-                   help="Ollama base URL for OCR, e.g. http://localhost:11434")
-    p.add_argument("--model", default="deepseek-ocr:3b",
-                   help="Ollama vision model for OCR (default: deepseek-ocr:3b)")
+    p.add_argument(
+        "--ollama-host", metavar="URL", help="Ollama base URL for OCR, e.g. http://localhost:11434"
+    )
+    p.add_argument(
+        "--model",
+        default="deepseek-ocr:3b",
+        help="Ollama vision model for OCR (default: deepseek-ocr:3b)",
+    )
     p.add_argument("--dpi", type=int, default=150, help="page render DPI for OCR (default: 150)")
-    p.add_argument("--ocr-timeout", type=int, default=600,
-                   help="per-page OCR timeout in seconds (default: 600)")
-    p.add_argument("--keep-markdown", action="store_true",
-                   help="also write the intermediate Markdown next to the EPUB")
+    p.add_argument(
+        "--ocr-timeout",
+        type=int,
+        default=600,
+        help="per-page OCR timeout in seconds (default: 600)",
+    )
+    p.add_argument(
+        "--keep-markdown",
+        action="store_true",
+        help="also write the intermediate Markdown next to the EPUB",
+    )
     p.add_argument("-q", "--quiet", action="store_true", help="suppress progress output")
     p.add_argument("--version", action="version", version=f"tomeforge {__version__}")
     args = p.parse_args(argv)
 
     if not calibre_available():
-        print("error: Calibre's `ebook-convert` is required on PATH. Install Calibre "
-              "(https://calibre-ebook.com/).", file=sys.stderr)
+        print(
+            "error: Calibre's `ebook-convert` is required on PATH. Install Calibre "
+            "(https://calibre-ebook.com/).",
+            file=sys.stderr,
+        )
         return 2
 
     try:
         result = convert(
-            args.input, args.output,
-            ocr=args.ocr, ollama_host=args.ollama_host, model=args.model,
-            dpi=args.dpi, ocr_timeout=args.ocr_timeout,
-            keep_markdown=args.keep_markdown, quiet=args.quiet,
+            args.input,
+            args.output,
+            ocr=args.ocr,
+            ollama_host=args.ollama_host,
+            model=args.model,
+            dpi=args.dpi,
+            ocr_timeout=args.ocr_timeout,
+            keep_markdown=args.keep_markdown,
+            quiet=args.quiet,
         )
     except ConversionError as e:
         print(f"error: {e}", file=sys.stderr)

@@ -33,8 +33,7 @@ def test_ocr_mostly_failed(tmp_path):
     assert C._ocr_mostly_failed(good) is False
     bad = tmp_path / "bad.md"
     bad.write_text(
-        "<!-- page 1 -->\n*(OCR failed on page 1: x)*\n"
-        "<!-- page 2 -->\n*(OCR failed on page 2: y)*"
+        "<!-- page 1 -->\n*(OCR failed on page 1: x)*\n<!-- page 2 -->\n*(OCR failed on page 2: y)*"
     )
     assert C._ocr_mostly_failed(bad) is True
 

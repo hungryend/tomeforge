@@ -24,23 +24,48 @@ _TIMEOUT = 900  # seconds for the Calibre step
 # intermediate XHTML (the `h:` prefix is Calibre's XHTML namespace).
 _TOC_FLAGS = [
     "--enable-heuristics",
-    "--toc-threshold", "6",
-    "--max-toc-links", "50",
+    "--toc-threshold",
+    "6",
+    "--max-toc-links",
+    "50",
     "--duplicate-links-in-toc",
-    "--level1-toc", "//h:h1",
-    "--level2-toc", "//h:h2",
-    "--level3-toc", "//h:h3",
+    "--level1-toc",
+    "//h:h1",
+    "--level2-toc",
+    "//h:h2",
+    "--level3-toc",
+    "//h:h3",
 ]
 # PDF → Markdown → EPUB: Calibre's Markdown Input turns #/##/### into real heading
 # tags and embeds images referenced relatively from the .md's own directory.
-_MD_FLAGS = ["--formatting-type", "markdown", "--paragraph-type", "off",
-             "--input-encoding", "utf-8", *_TOC_FLAGS]
+_MD_FLAGS = [
+    "--formatting-type",
+    "markdown",
+    "--paragraph-type",
+    "off",
+    "--input-encoding",
+    "utf-8",
+    *_TOC_FLAGS,
+]
 
 _CALIBRE = shutil.which("ebook-convert") or "ebook-convert"
 _PDF_EXT = ".pdf"
 # Other formats Calibre reads natively → convert directly.
-_DIRECT_EXTS = {".mobi", ".azw", ".azw3", ".epub", ".fb2", ".lit", ".pdb", ".rtf",
-                ".odt", ".docx", ".htmlz", ".cbz", ".cbr"}
+_DIRECT_EXTS = {
+    ".mobi",
+    ".azw",
+    ".azw3",
+    ".epub",
+    ".fb2",
+    ".lit",
+    ".pdb",
+    ".rtf",
+    ".odt",
+    ".docx",
+    ".htmlz",
+    ".cbz",
+    ".cbr",
+}
 
 
 class ConversionError(RuntimeError):
@@ -75,7 +100,9 @@ def _run_calibre(src: Path, out: Path, extra_args: list[str], timeout: int = _TI
     out.parent.mkdir(parents=True, exist_ok=True)
     cmd = [_CALIBRE, str(src), str(out), "--no-default-epub-cover", *extra_args]
     try:
-        proc = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=timeout)
+        proc = subprocess.run(
+            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=timeout
+        )
     except subprocess.TimeoutExpired as e:
         raise ConversionError(f"ebook-convert timed out after {timeout}s") from e
     if proc.returncode != 0:
@@ -154,8 +181,10 @@ def convert(
     else:  # auto
         engine = "ollama" if (scanned and host_ok) else "heuristic"
         if scanned and engine == "heuristic":
-            log("! this looks like a scanned/image PDF and no OCR server is configured — "
-                "text will be poor. Pass --ocr always --ollama-host <url> to OCR it.")
+            log(
+                "! this looks like a scanned/image PDF and no OCR server is configured — "
+                "text will be poor. Pass --ocr always --ollama-host <url> to OCR it."
+            )
 
     caller_owns_work = work_dir is not None
     work = Path(work_dir) if work_dir is not None else Path(mkdtemp(prefix="tomeforge-"))
@@ -191,4 +220,6 @@ def convert(
         if not caller_owns_work:
             shutil.rmtree(work, ignore_errors=True)
 
-    return ConversionResult(out, engine="ocr" if engine == "ollama" else "heuristic", scanned=scanned)
+    return ConversionResult(
+        out, engine="ocr" if engine == "ollama" else "heuristic", scanned=scanned
+    )
