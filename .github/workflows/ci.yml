@@ -21,10 +21,14 @@
 name: CI
 
 on:
+  # Markdown-only changes (README, docs) don't affect the image, so skip the whole
+  # pipeline for them — no needless Calibre build, and no release cut for a doc edit.
   push:
     branches: [main]
+    paths-ignore: ['**.md']
   pull_request:
     branches: [main]
+    paths-ignore: ['**.md']
   workflow_dispatch:
 
 # Cancel in-progress runs on the same ref when a new commit lands.
