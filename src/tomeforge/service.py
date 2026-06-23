@@ -170,8 +170,12 @@ def create_app(base_dir: str | Path | None = None):
         with _lock:
             _jobs[job_id] = job
         opts = dict(
-            ocr=ocr, ollama_host=ollama_host or None, model=model,
-            dpi=dpi, ocr_timeout=ocr_timeout, num_ctx=num_ctx,
+            ocr=ocr,
+            ollama_host=ollama_host or None,
+            model=model,
+            dpi=dpi,
+            ocr_timeout=ocr_timeout,
+            num_ctx=num_ctx,
         )
         threading.Thread(target=_run, args=(job, src, opts), daemon=True).start()
         return job.public()
@@ -224,8 +228,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         import uvicorn
     except ModuleNotFoundError:
-        print("error: the HTTP service needs the 'service' extra: "
-              "pip install 'tomeforge[service]'")
+        print("error: the HTTP service needs the 'service' extra: pip install 'tomeforge[service]'")
         return 2
 
     uvicorn.run(create_app(args.jobs_dir), host=args.host, port=args.port)

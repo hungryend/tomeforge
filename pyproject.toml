@@ -17,7 +17,10 @@ tomeforge = "tomeforge.cli:main"
 [project.optional-dependencies]
 # HTTP sidecar mode (`tomeforge serve`). The CLI/library work without these.
 service = ["fastapi>=0.115", "uvicorn[standard]>=0.32", "python-multipart>=0.0.18"]
-dev = ["pytest>=8.3", "ruff>=0.8", "Pillow>=11.0", "httpx>=0.27"]
+# ruff is pinned (not >=) so lint/format are deterministic across local + CI —
+# tomeforge gitignores uv.lock, so without a pin CI would resolve a newer ruff
+# whose formatter/rules drift from what was validated locally. Bump deliberately.
+dev = ["pytest>=8.3", "ruff==0.15.17", "Pillow>=11.0", "httpx>=0.27"]
 
 [build-system]
 requires = ["hatchling"]
