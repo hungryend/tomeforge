@@ -1,5 +1,11 @@
 # tomeforge
 
+<p>
+  <a href="https://github.com/hungryend/tomeforge/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/hungryend/tomeforge/actions/workflows/ci.yml/badge.svg"/></a>
+  <a href="https://github.com/hungryend/tomeforge/releases"><img alt="Release" src="https://img.shields.io/github/v/release/hungryend/tomeforge"/></a>
+  <a href="https://github.com/hungryend/tomeforge/pkgs/container/tomeforge"><img alt="GHCR" src="https://img.shields.io/badge/ghcr.io-hungryend%2Ftomeforge-blue?logo=docker"/></a>
+</p>
+
 Turn PDFs (and MOBI/AZW/…) into clean, **reflowable EPUBs with a linked table of contents**.
 
 PDFs take a Markdown detour for quality: **PDF → Markdown** (via [PyMuPDF], with font‑size +
@@ -74,9 +80,20 @@ Beyond the CLI, tomeforge can run as a small HTTP service so another app can off
 conversion (and its heavyweight PyMuPDF + Calibre deps) instead of bundling them:
 
 ```bash
+# Prebuilt image — published to GHCR by CI on every release:
+docker run -p 8400:8400 ghcr.io/hungryend/tomeforge:latest
+
+# …or build from a clone:
+docker compose up -d --build
+
+# …or without Docker:
 pip install "tomeforge[service]"          # adds fastapi + uvicorn
-tomeforge serve --port 8400               # or: docker compose up -d --build
+tomeforge serve --port 8400
 ```
+
+The published image bundles Calibre + PyMuPDF and self-reports health at `/healthz`.
+Tags: `:latest`, the SemVer release (`:vX.Y.Z`), and `:sha-<short>`. Scanned-PDF OCR
+delegates to an external Ollama (see below) — none is bundled in the image.
 
 ```bash
 # Submit a file, then poll the returned job_id until it's done.
